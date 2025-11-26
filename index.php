@@ -3,28 +3,21 @@ include 'config.php';
 
 // Process guest message from anyone
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_message'])) {
-    $name = mysqli_real_escape_string($conn, $_POST['name']);
-    $message = mysqli_real_escape_string($conn, $_POST['message']);
+    $name = htmlspecialchars($_POST['name']);
+    $message = htmlspecialchars($_POST['message']);
     
-    $sql = "INSERT INTO guest_messages (name, message) VALUES ('$name', '$message')";
-    if (mysqli_query($conn, $sql)) {
+    if (!empty($name) && !empty($message)) {
+        saveMessage($name, $message);
         $success = "Love message sent successfully! 💖";
+        header("Location: index.php");
+        exit();
     } else {
-        $error = "Failed to send message.";
+        $error = "Please fill in all fields.";
     }
-    header("Location: index.php");
-    exit();
 }
 
-// Get slideshow data
-$slides_result = mysqli_query($conn, "SELECT * FROM love_slides WHERE is_active = TRUE ORDER BY slide_number");
-$slides = [];
-while ($slide = mysqli_fetch_assoc($slides_result)) {
-    $slides[] = $slide;
-}
-
-// Get guest messages
-$messages_result = mysqli_query($conn, "SELECT * FROM guest_messages ORDER BY created_at DESC");
+$slides = getSlides();
+$messages = getMessages();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -443,15 +436,15 @@ $messages_result = mysqli_query($conn, "SELECT * FROM guest_messages ORDER BY cr
         <!-- GUEST MESSAGES -->
         <div class="message-form">
             <h2>💕 Messages from Friends & Family</h2>
-            <?php while ($message = mysqli_fetch_assoc($messages_result)): ?>
+            <?php foreach ($messages as $message): ?>
                 <div class="message-card">
-                    <h4>👤 <?php echo htmlspecialchars($message['name']); ?></h4>
-                    <p><?php echo nl2br(htmlspecialchars($message['message'])); ?></p>
+                    <h4>👤 <?php echo $message['name']; ?></h4>
+                    <p><?php echo nl2br($message['message']); ?></p>
                     <small>📅 <?php echo date('M j, Y • g:i A', strtotime($message['created_at'])); ?></small>
                 </div>
-            <?php endwhile; ?>
+            <?php endforeach; ?>
             
-            <?php if (mysqli_num_rows($messages_result) == 0): ?>
+            <?php if (empty($messages)): ?>
                 <div style="text-align: center; opacity: 0.8; padding: 20px;">
                     <p>No messages yet. Be the first to share your love! 🌸</p>
                 </div>
@@ -559,4 +552,3 @@ $messages_result = mysqli_query($conn, "SELECT * FROM guest_messages ORDER BY cr
     </script>
 </body>
 </html>
-<?php mysqli_close($conn); ?>
