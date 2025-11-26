@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-// Simple file-based storage untuk Netlify
+// Simple file-based storage untuk Vercel
 function getMessages() {
     if (!file_exists('messages.json')) {
         file_put_contents('messages.json', '[]');
@@ -21,6 +21,7 @@ function saveMessage($name, $message) {
 }
 
 function getSlides() {
+    // Default love slides
     return [
         [
             'title' => '🌊 The Beginning',
